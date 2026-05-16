@@ -24,6 +24,35 @@ class chessboard{
     private:
         char board[8][8];
         int moveCounter = 0;
+
+        bool isValidKnightMove(int fromRow, int fromCol, int toRow, int toCol){
+            int rowDiff = abs(toRow - fromRow);
+            int colDiff = abs(toCol - fromCol);
+            return (rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2);
+        }
+        bool isValidBishopMove(int fromRow, int fromCol, int toRow, int toCol){
+            return abs(toRow - fromRow) == abs(toCol - fromCol);
+        }
+        bool isValidRookMove(int fromRow, int fromCol, int toRow, int toCol){
+            return (fromRow == toRow || fromCol == toCol);
+        }
+        bool isValidQueenMove(int fromRow, int fromCol, int toRow, int toCol){
+            return isValidRookMove(fromRow, fromCol, toRow, toCol) || isValidBishopMove(fromRow, fromCol, toRow, toCol);
+        }
+        bool isValidKingMove(int fromRow, int fromCol, int toRow, int toCol){
+            return abs(toRow - fromRow) <= 1 && abs(toCol - fromCol) <= 1;
+        }
+        bool isValidMove(char piece, int fromRow, int fromCol, int toRow, int toCol){
+            switch(piece){
+                case 'N': case 'n': return isValidKnightMove(fromRow, fromCol, toRow, toCol);
+                case 'B': case 'b': return isValidBishopMove(fromRow, fromCol, toRow, toCol);
+                case 'R': case 'r': return isValidRookMove(fromRow, fromCol, toRow, toCol);
+                case 'Q': case 'q': return isValidQueenMove(fromRow, fromCol, toRow, toCol);
+                case 'K': case 'k': return isValidKingMove(fromRow, fromCol, toRow, toCol);
+                default: return true; // pawn to be added
+            }
+        }
+
     public:
         chessboard(){
             char initialBoard[8][8] = {
@@ -83,6 +112,19 @@ class chessboard{
             }
             if(getTurn() == 2 && pieceValues[board[fromnum][fromletter]] > 0){
                 std::cout << "It's black's turn. Please move a black piece." << std::endl;
+                return;
+            }
+            char targetPiece = board[tonum][toletter];
+            if(getTurn() == 1 && isupper(targetPiece)){
+                std::cout << "You cannot capture your own piece." << std::endl;
+                return;
+            }
+            if(getTurn() == 2 && islower(targetPiece)){
+                std::cout << "You cannot capture your own piece." << std::endl;
+                return;
+            }
+            if(!isValidMove(board[fromnum][fromletter], fromnum, fromletter, tonum, toletter)){
+                std::cout << "Invalid move for this piece." << std::endl;
                 return;
             }
             board[tonum][toletter] = board[fromnum][fromletter];
