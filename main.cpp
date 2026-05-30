@@ -73,6 +73,17 @@ private:
     // ___Move history for display___
     // save each move algebraic notation
     std::vector<std::string> moveHistory;
+    // ___Castling square constants___
+    static const int WHITE_KING_ROW      = 7;
+    static const int BLACK_KING_ROW      = 0;
+    static const int KING_COL            = 4;
+    static const int KINGSIDE_ROOK_COL   = 7;
+    static const int QUEENSIDE_ROOK_COL  = 0;
+    static const int KINGSIDE_KING_DST   = 6;
+    static const int QUEENSIDE_KING_DST  = 2;
+    static const int KINGSIDE_ROOK_DST   = 5;
+    static const int QUEENSIDE_ROOK_DST  = 3;
+
 
     bool isPathClearRook(int fromRow, int fromCol, int toRow, int toCol) {
         int rowStep = (toRow > fromRow) ? 1 : (toRow < fromRow) ? -1 : 0;
@@ -179,44 +190,45 @@ private:
 
     // ___ Castling validation___
     bool canCastle(int turn, bool kingSide) {
-        if (turn == 1) {
-            // White castles on rank 8
-            if (whiteKingMoved) return false;
-            if (kingSide) {
-                if (whiteRookHMoved) return false;
-                // Squares f1 and g1 must be empty
-                if (board[7][5] != '.' || board[7][6] != '.') return false;
-                // King must not be in check, or pass through f1, or land on g1 under attack
-                if (isInCheck(1)) return false;
-                if (isSquareAttackedBy(7, 5, 2)) return false;
-                if (isSquareAttackedBy(7, 6, 2)) return false;
-            } else {
-                if (whiteRookAMoved) return false;
-                // Squares b1, c1, d1 must be empty
-                if (board[7][1] != '.' || board[7][2] != '.' || board[7][3] != '.') return false;
-                if (isInCheck(1)) return false;
-                if (isSquareAttackedBy(7, 3, 2)) return false;
-                if (isSquareAttackedBy(7, 2, 2)) return false;
-            }
+    if (turn == 1) {
+        if (whiteKingMoved) return false;
+        if (kingSide) {
+            if (whiteRookHMoved) return false;
+            if (board[WHITE_KING_ROW][KINGSIDE_ROOK_DST] != '.' ||
+                board[WHITE_KING_ROW][KINGSIDE_KING_DST] != '.') return false;
+            if (isInCheck(1)) return false;
+            if (isSquareAttackedBy(WHITE_KING_ROW, KINGSIDE_ROOK_DST, 2)) return false;
+            if (isSquareAttackedBy(WHITE_KING_ROW, KINGSIDE_KING_DST, 2)) return false;
         } else {
-            // Black castles on rank 1 (row index 0 internally)
-            if (blackKingMoved) return false;
-            if (kingSide) {
-                if (blackRookHMoved) return false;
-                if (board[0][5] != '.' || board[0][6] != '.') return false;
-                if (isInCheck(2)) return false;
-                if (isSquareAttackedBy(0, 5, 1)) return false;
-                if (isSquareAttackedBy(0, 6, 1)) return false;
-            } else {
-                if (blackRookAMoved) return false;
-                if (board[0][1] != '.' || board[0][2] != '.' || board[0][3] != '.') return false;
-                if (isInCheck(2)) return false;
-                if (isSquareAttackedBy(0, 3, 1)) return false;
-                if (isSquareAttackedBy(0, 2, 1)) return false;
-            }
+            if (whiteRookAMoved) return false;
+            if (board[WHITE_KING_ROW][1] != '.' ||
+                board[WHITE_KING_ROW][QUEENSIDE_ROOK_DST] != '.' ||
+                board[WHITE_KING_ROW][QUEENSIDE_KING_DST] != '.') return false;
+            if (isInCheck(1)) return false;
+            if (isSquareAttackedBy(WHITE_KING_ROW, QUEENSIDE_ROOK_DST, 2)) return false;
+            if (isSquareAttackedBy(WHITE_KING_ROW, QUEENSIDE_KING_DST, 2)) return false;
         }
-        return true;
+    } else {
+        if (blackKingMoved) return false;
+        if (kingSide) {
+            if (blackRookHMoved) return false;
+            if (board[BLACK_KING_ROW][KINGSIDE_ROOK_DST] != '.' ||
+                board[BLACK_KING_ROW][KINGSIDE_KING_DST] != '.') return false;
+            if (isInCheck(2)) return false;
+            if (isSquareAttackedBy(BLACK_KING_ROW, KINGSIDE_ROOK_DST, 1)) return false;
+            if (isSquareAttackedBy(BLACK_KING_ROW, KINGSIDE_KING_DST, 1)) return false;
+        } else {
+            if (blackRookAMoved) return false;
+            if (board[BLACK_KING_ROW][1] != '.' ||
+                board[BLACK_KING_ROW][QUEENSIDE_ROOK_DST] != '.' ||
+                board[BLACK_KING_ROW][QUEENSIDE_KING_DST] != '.') return false;
+            if (isInCheck(2)) return false;
+            if (isSquareAttackedBy(BLACK_KING_ROW, QUEENSIDE_ROOK_DST, 1)) return false;
+            if (isSquareAttackedBy(BLACK_KING_ROW, QUEENSIDE_KING_DST, 1)) return false;
+        }
     }
+    return true;
+}
 
     // Checks whether a given square is attacked by any piece belonging to "attackerTurn".
     // Used for castling checks and general king safety validation.
@@ -592,51 +604,47 @@ public:
 
     // Performs a castling move
     // Moves the king two squares toward the rook, then hops the rook over.
- void performCastle(int turn, bool kingSide) {
-    if (!canCastle(turn, kingSide)) {
+    void performCastle(int turn, bool kingSide) {
+    if (!canCastle(turn, kingSide))
         throw ChessException("Castling is not available.");
+
+    int row = (turn == 1) ? WHITE_KING_ROW : BLACK_KING_ROW;
+
+    if (kingSide){
+        // King e→g, rook h→f
+        board[row][KINGSIDE_KING_DST]  = board[row][KING_COL];
+        board[row][KING_COL]           = '.';
+        board[row][KINGSIDE_ROOK_DST]  = board[row][KINGSIDE_ROOK_COL];
+        board[row][KINGSIDE_ROOK_COL]  = '.';
+        moveHistory.push_back("O-O");
+    } else {
+        // King e→c, rook a→d
+        board[row][QUEENSIDE_KING_DST] = board[row][KING_COL];
+        board[row][KING_COL]           = '.';
+        board[row][QUEENSIDE_ROOK_DST] = board[row][QUEENSIDE_ROOK_COL];
+        board[row][QUEENSIDE_ROOK_COL] = '.';
+        moveHistory.push_back("O-O-O");
     }
 
-        int row = (turn == 1) ? 7 : 0;
-
-        if (kingSide) {
-            // King moves e1→g1 (or e8→g8), rook moves h1→f1 (or h8→f8)
-            board[row][6] = board[row][4]; // king slides two squares right
-            board[row][4] = '.';
-            board[row][5] = board[row][7]; // rook jumps to the other side of the king
-            board[row][7] = '.';
-            moveHistory.push_back("O-O");
-        } else {
-            // King moves e1→c1 (or e8→c8), rook moves a1→d1 (or a8→d8)
-            board[row][2] = board[row][4]; // king slides two squares left
-            board[row][4] = '.';
-            board[row][3] = board[row][0]; // rook jumps over the king
-            board[row][0] = '.';
-            moveHistory.push_back("O-O-O");
-        }
-
-        // Mark king and rook as having moved so neither can castle again
-        if (turn == 1) {
-            whiteKingMoved = true;
-            if (kingSide) whiteRookHMoved = true;
-            else          whiteRookAMoved = true;
-        } else {
-            blackKingMoved = true;
-            if (kingSide) blackRookHMoved = true;
-            else          blackRookAMoved = true;
-        }
-
-        // Castling is not a pawn move or capture, so the half-move clock ticks up
-        halfMoveClock++;
-        moveCounter++;
-
-        positionHistory.push_back(getBoardHash());
-
-        // Let the new player know if they're in check after the castle
-        int opponent = getTurn();
-        if (isInCheck(opponent))
-            std::cout << ((opponent == 1) ? "White" : "Black") << " is in check!\n";
+    if (turn == 1) {
+        whiteKingMoved = true;
+        if (kingSide) whiteRookHMoved = true;
+        else          whiteRookAMoved = true;
+    } else {
+        blackKingMoved = true;
+        if (kingSide) blackRookHMoved = true;
+        else          blackRookAMoved = true;
     }
+
+    halfMoveClock++;
+    moveCounter++;
+
+    positionHistory.push_back(getBoardHash());
+
+    int opponent = getTurn();
+    if (isInCheck(opponent))
+        std::cout << ((opponent == 1) ? "White" : "Black") << " is in check!\n";
+}
 
     // Prints a numbered list of all moves played so far.
     // Useful to review the game after it ends.
@@ -652,6 +660,54 @@ public:
         if (moveHistory.size() % 2 != 0) std::cout << "\n";
         std::cout << "\n";
     }
+
+    // Generates a FEN string
+    std::string toFEN() {
+    std::ostringstream fen; 
+
+    // 1. Piece placement
+    for (int r = 0; r < 8; r++) {
+        int empty = 0;
+        for (int c = 0; c < 8; c++) {
+            if (board[r][c] == '.') {
+                empty++;
+            } else {
+                if (empty > 0) { fen << empty; empty = 0; }
+                fen << board[r][c];
+            }
+        }
+        if (empty > 0) fen << empty;
+        if (r < 7) fen << '/';
+    }
+
+    // 2. Active color
+    fen << ' ' << (getTurn() == 1 ? 'w' : 'b');
+
+    // 3. Castling rights
+    std::string castling = "";
+    if (!whiteKingMoved && !whiteRookHMoved) castling += 'K';
+    if (!whiteKingMoved && !whiteRookAMoved) castling += 'Q';
+    if (!blackKingMoved && !blackRookHMoved) castling += 'k';
+    if (!blackKingMoved && !blackRookAMoved) castling += 'q';
+    fen << ' ' << (castling.empty() ? "-" : castling);
+
+    // 4. En passant target square
+    if (enPassantRow == -1) {
+        fen << " -";
+    } else {
+        char file = 'a' + enPassantCol;
+        int  rank = 8 - enPassantRow;
+        fen << ' ' << file << rank;
+    }
+
+    // 5. Halfmove clock
+    fen << ' ' << halfMoveClock;
+
+    // 6. Fullmove number
+    fen << ' ' << (moveCounter / 2 + 1);
+
+    return fen.str();
+}
 };
 
 int main() {
@@ -684,6 +740,7 @@ int main() {
                       << " wins!\n";
             board.printMoveHistory();
             break;
+
         }
 
         // ____Castling shorthand_______
@@ -745,6 +802,7 @@ int main() {
             board.printMoveHistory();
             break;
         }
+        std::cout << "\nFEN: " << board.toFEN() << "\n"; // Print FEN for debugging
     }
 
     return 0;
