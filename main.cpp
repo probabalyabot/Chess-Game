@@ -76,10 +76,10 @@ private:
 
     bool isPathClearRook(int fromRow, int fromCol, int toRow, int toCol) {
         int rowStep = (toRow > fromRow) ? 1 : (toRow < fromRow) ? -1 : 0;
-        int colStep = (toCol > fromCol) ? 1 : (toCol < fromCol) ? -1 : 0;
+        int colStep = (toCol > fromCol) ? 1 : (toCol < fromCol) ? -1 : 0;//check which direction the rook is moving
         int currentRow = fromRow + rowStep;
         int currentCol = fromCol + colStep;
-        while (currentRow != toRow || currentCol != toCol) {
+        while (currentRow != toRow || currentCol != toCol) {//iterates thru each square from start to finish and check if null is present
             if (board[currentRow][currentCol] != '.') return false;
             currentRow += rowStep;
             currentCol += colStep;
@@ -145,6 +145,7 @@ private:
 
     // Pure attack geometry for pawns = no board state, no en passant.
     // Used by isInCheck so we don't confuse "legal move" with "attacks square".
+    // this is to check if a pawn is attacking, so we route it thru isAttacking
     bool isPawnAttacking(char piece, int fromRow, int fromCol, int toRow, int toCol) {
         int direction = (piece == 'P') ? -1 : 1;
         return (toRow - fromRow == direction) && (abs(toCol - fromCol) == 1);
@@ -163,7 +164,7 @@ private:
     }
 
     // check if attack = valid
-    // Same as isValidMove but takes pawns thru isPawnAttacking.
+    // Same as isValidMove but takes pawns thru isPawnAttacking, as diaonal movement when capturing need to be accounted
     bool isAttacking(char piece, int fromRow, int fromCol, int toRow, int toCol) {
         switch (piece) {
             case 'P': case 'p': return isPawnAttacking(piece, fromRow, fromCol, toRow, toCol);
@@ -218,7 +219,7 @@ private:
     }
 
     // Checks whether a given square is attacked by any piece belonging to "attackerTurn".
-    // Used for castling checks and general king-safety validation.
+    // Used for castling checks and general king safety validation.
     bool isSquareAttackedBy(int row, int col, int attackerTurn) {
         for (int r = 0; r < 8; r++) {
             for (int c = 0; c < 8; c++) {
@@ -344,7 +345,7 @@ private:
 
         if (hasMatingPiece(whitePieces) || hasMatingPiece(blackPieces)) return false;
 
-        // From here we only have kings, knights, and bishops left
+        // only have kings, knights, and bishops left
         // K vs K = draw
         if (whitePieces.empty() && blackPieces.empty()) return true;
 
@@ -352,7 +353,7 @@ private:
         if ((whitePieces.size() == 1 && blackPieces.empty()) ||
             (whitePieces.empty() && blackPieces.size() == 1)) return true;
 
-        // K+B vs K+B — technically only a draw if same color squares,
+        // K+B vs K+B technically only a draw if same color squares,
         // I cba so its just draw if both sides have 1 bishop left
         if (whitePieces.size() == 1 && blackPieces.size() == 1 &&
             toupper(whitePieces[0]) == 'B' && toupper(blackPieces[0]) == 'B') return true;
@@ -504,7 +505,7 @@ public:
                 std::string(1, board[fromnum][fromletter]) + " cannot move from " + from + " to " + to + "."
             );
 
-        // Speculative execution — apply move, test for self-check, go back if needed
+        // Speculative execution => apply move, test for self-check, go back if needed
         char savedFrom    = board[fromnum][fromletter];
         char savedTo      = board[tonum][toletter];
         int  savedEPRow   = enPassantRow;
@@ -570,19 +571,18 @@ public:
         // Record board position for 3 repetition
         positionHistory.push_back(getBoardHash());
 
-        // Pawn promotion
-        if ((board[tonum][toletter] == 'P' && tonum == 0) ||
-            (board[tonum][toletter] == 'p' && tonum == 7)) {
+        // Pawn promotion - techinically shouldnt have input here but again too much work to restructure
+        if((board[tonum][toletter] == 'P' && tonum == 0) || (board[tonum][toletter] == 'p' && tonum == 7)){
             char choice = 'Q';
             std::cout << "Pawn promotion! Choose piece (Q/R/B/N): ";
-            std::cin >> choice;
-            choice = toupper(choice);
-            switch (choice) {
-                case 'Q': case 'R': case 'B': case 'N': break;
-                default: choice = 'Q'; break;
-            }
-            board[tonum][toletter] = (savedFrom == 'P') ? toupper(choice) : tolower(choice);
+            while (true) {
+                std::cin >> choice;
+                choice = toupper(choice);
+                if (choice == 'Q' || choice == 'R' || choice == 'B' || choice == 'N') break;
+                std::cout << "Invalid choice. Please enter Q, R, B, or N: ";
         }
+        board[tonum][toletter] = (savedFrom == 'P') ? toupper(choice) : tolower(choice);
+    }
 
 
         int opponent = getTurn(); //points to whoever moves next
@@ -592,11 +592,10 @@ public:
 
     // Performs a castling move
     // Moves the king two squares toward the rook, then hops the rook over.
-    void performCastle(int turn, bool kingSide) {
-        if (!canCastle(turn, kingSide)) {
-            std::cout << "Error: Castling is not available.\n";
-            return;
-        }
+ void performCastle(int turn, bool kingSide) {
+    if (!canCastle(turn, kingSide)) {
+        throw ChessException("Castling is not available.");
+    }
 
         int row = (turn == 1) ? 7 : 0;
 
@@ -663,7 +662,7 @@ int main() {
     chessboard board;
 
     // ____Main game loop____
-    //check for EOF on every read so Ctrl+D doesn't spin forever.
+    // check for EOF on every read so Ctrl+D doesn't spin forever.
     while (true) {
         board.printBoard();
         std::string from, to;
@@ -707,16 +706,9 @@ int main() {
             continue;
         }
 
-        // Read the destination square for normal moves
-        if (!(std::cin >> to)) {
-            std::cout << "\nInput ended. Goodbye!\n";
-            break;
-        }
-
         // ____Draw offer command____
-        // If the current player types "draw" as the source square, we ask
-        // their opponent if they accept. A real tournament would need a proper
-        // handshake but for a terminal game this works fine.
+        // Checked BEFORE reading 'to' so typing "draw" doesn't block
+        // waiting for a second token that will never come.
         if (from == "draw") {
             std::cout << (board.getTurn() == 1 ? "Black" : "White")
                       << ", do you accept the draw? (y/n): ";
@@ -731,12 +723,18 @@ int main() {
             }
         }
 
+        // Read the destination square for normal moves
+        if (!(std::cin >> to)) {
+            std::cout << "\nInput ended. Goodbye!\n";
+            break;
+        }
+
         // ____Attempt the move____
         try {
             board.makeMove(from, to);
         } catch (const ChessException& e) {
             std::cout << "Error: " << e.what() << "\n";
-            continue; // Bad move — let the same player try again
+            continue; // Bad move do again
         }
 
         //  ___Check for game-ending conditions after every successful move___
