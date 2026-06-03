@@ -1,11 +1,6 @@
-#include <iostream>
-#include <map>
-#include <regex>
-#include <stdexcept>
-#include <string>
-#include <vector>    
-#include <sstream>   
 #include "chessboard.h"
+#include <iostream>
+#include <cctype>
 
 int main() {
     std::cout << "Welcome to the chess game!\n";
@@ -37,7 +32,6 @@ int main() {
                       << " wins!\n";
             board.printMoveHistory();
             break;
-
         }
 
         // ____Castling shorthand_______
@@ -50,6 +44,11 @@ int main() {
                 std::cout << "Error: " << e.what() << "\n";
                 continue;
             }
+
+            
+            if (board.isInCheck(board.getTurn()))
+                std::cout << (board.getTurn() == 1 ? "White" : "Black") << " is in check!\n";
+
             std::string result;
             if (board.checkGameOver(result)) {
                 board.printBoard();
@@ -86,12 +85,36 @@ int main() {
         // ____Attempt the move____
         try {
             board.makeMove(from, to);
+            if (board.needsPromotion()){
+            char choice;
+
+            std::cout << "Pawn promotion! Choose piece (Q/R/B/N): ";
+
+            while (true) {
+                std::cin >> choice;
+                choice = std::toupper(choice);
+
+                if (choice == 'Q' ||
+                    choice == 'R' ||
+                    choice == 'B' ||
+                    choice == 'N')
+                    break;
+
+                std::cout << "Invalid choice. Please enter Q, R, B, or N: ";
+            }
+
+            board.promotePawn(choice);
+        }
         } catch (const ChessException& e) {
             std::cout << "Error: " << e.what() << "\n";
-            continue; // Bad move do again
+            continue;
         }
 
-        //  ___Check for game-ending conditions after every successful move___
+    
+        if (board.isInCheck(board.getTurn()))
+            std::cout << (board.getTurn() == 1 ? "White" : "Black") << " is in check!\n";
+
+        
         std::string result;
         if (board.checkGameOver(result)) {
             board.printBoard();
@@ -99,8 +122,9 @@ int main() {
             board.printMoveHistory();
             break;
         }
-        std::cout << "\nFEN: " << board.toFEN() << "\n"; //
-        std::cout<< "Use FEN string to load this position in other chess software\n";
+
+        std::cout << "\nFEN: " << board.toFEN() << "\n";
+        std::cout << "Use FEN string to load this position in other chess software\n";
     }
 
     return 0;

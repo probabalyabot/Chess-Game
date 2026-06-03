@@ -1,7 +1,7 @@
 #include "chessboard.h"
 #include <iostream>
 #include <regex>
-#include <stdexcept>
+
 
 std::map<char, int> fileMap = {
     {'a', 0}, {'b', 1}, {'c', 2}, {'d', 3},
@@ -285,6 +285,22 @@ bool chessboard::isInsufficientMaterial() {
 }
 
 // ___Public methods___
+bool chessboard::needsPromotion() {
+    return pendingPromotion;
+}
+
+void chessboard::promotePawn(char piece) {
+    char current = board[promotionRow][promotionCol];
+
+    board[promotionRow][promotionCol] =
+        isupper(current)
+            ? toupper(piece)
+            : tolower(piece);
+
+    pendingPromotion = false;
+    promotionRow = -1;
+    promotionCol = -1;
+}
 
 void chessboard::printBoard() {
     for (int i = 0; i < 8; i++) {
@@ -454,23 +470,14 @@ void chessboard::makeMove(std::string from, std::string to) {
     moveHistory.push_back(from + "-" + to);
     positionHistory.push_back(getBoardHash());
 
-    // Pawn promotion — I/O still here for now, will be removed in next refactor step
+    // Pawn promotion now handeled in main loop
     if ((board[tonum][toletter] == 'P' && tonum == 0) ||
-        (board[tonum][toletter] == 'p' && tonum == 7)) {
-        char choice = 'Q';
-        std::cout << "Pawn promotion! Choose piece (Q/R/B/N): ";
-        while (true) {
-            std::cin >> choice;
-            choice = toupper(choice);
-            if (choice == 'Q' || choice == 'R' || choice == 'B' || choice == 'N') break;
-            std::cout << "Invalid choice. Please enter Q, R, B, or N: ";
-        }
-        board[tonum][toletter] = (savedFrom == 'P') ? toupper(choice) : tolower(choice);
+    (board[tonum][toletter] == 'p' && tonum == 7))
+    {
+    pendingPromotion = true;
+    promotionRow = tonum;
+    promotionCol = toletter;
     }
-
-    int opponent = getTurn();
-    if (isInCheck(opponent))
-        std::cout << ((opponent == 1) ? "White" : "Black") << " is in check!\n";
 }
 
 void chessboard::performCastle(int turn, bool kingSide) {
@@ -507,9 +514,7 @@ void chessboard::performCastle(int turn, bool kingSide) {
     moveCounter++;
     positionHistory.push_back(getBoardHash());
 
-    int opponent = getTurn();
-    if (isInCheck(opponent))
-        std::cout << ((opponent == 1) ? "White" : "Black") << " is in check!\n";
+    
 }
 
 void chessboard::printMoveHistory() {

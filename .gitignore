@@ -6,6 +6,6 @@
 # Test files
 test.cpp
 test.exe
-
+sfml_guide.cpp
 # Python utilities
 *.py

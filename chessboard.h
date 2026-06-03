@@ -33,6 +33,9 @@ private:
     bool blackRookAMoved = false;
     bool blackRookHMoved = false;
     int  halfMoveClock   = 0;
+    bool pendingPromotion = false;
+    int promotionRow = -1;
+    int promotionCol = -1;
     std::vector<std::string> positionHistory;
     std::vector<std::string> moveHistory;
 
@@ -74,4 +77,6 @@ public:
     void        performCastle(int turn, bool kingSide);
     void        printMoveHistory();
     std::string toFEN();
+    bool needsPromotion();
+    void promotePawn(char piece);
 };
