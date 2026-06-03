@@ -301,6 +301,61 @@ void chessboard::promotePawn(char piece) {
     promotionRow = -1;
     promotionCol = -1;
 }
+char chessboard::getBoard(int row, int col) {
+    return board[row][col];
+}
+//for gui
+std::vector<std::pair<int,int>> chessboard::getLegalMovesFor(int row, int col) {
+    std::vector<std::pair<int,int>> moves;
+    char piece = board[row][col];
+    if (piece == '.') return moves;
+
+    int turn = getTurn();
+    bool isOwnPiece = (turn == 1) ? isupper(piece) : islower(piece);
+    if (!isOwnPiece) return moves;
+
+    for (int tr = 0; tr < 8; tr++) {
+        for (int tc = 0; tc < 8; tc++) {
+            if (tr == row && tc == col) continue;
+            char target = board[tr][tc];
+            if (turn == 1 && isupper(target)) continue;
+            if (turn == 2 && islower(target)) continue;
+            if (!isValidMove(piece, row, col, tr, tc)) continue;
+
+            // need to test it, so that it doesn't leave king in check
+            char savedFrom = board[row][col];
+            char savedTo   = board[tr][tc];
+            int  savedEPRow = enPassantRow;
+            int  savedEPCol = enPassantCol;
+            int  epCapRow   = -1;
+
+            if ((piece == 'P' || piece == 'p') &&
+                abs(tc - col) == 1 && board[tr][tc] == '.') {
+                epCapRow = row;
+                board[row][tc] = '.';
+            }
+
+            board[tr][tc]  = savedFrom;
+            board[row][col] = '.';
+
+            bool inCheck = isInCheck(turn);
+
+            board[row][col] = savedFrom;
+            board[tr][tc]   = savedTo;
+            enPassantRow    = savedEPRow;
+            enPassantCol    = savedEPCol;
+            if (epCapRow != -1)
+                board[epCapRow][tc] = (piece == 'P') ? 'p' : 'P';
+
+            if (!inCheck) moves.push_back({tr, tc});
+        }
+    }
+    return moves;
+}
+
+std::vector<std::string> chessboard::getMoveHistory() {
+    return moveHistory;
+}
 
 void chessboard::printBoard() {
     for (int i = 0; i < 8; i++) {

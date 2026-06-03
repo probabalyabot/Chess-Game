@@ -79,4 +79,7 @@ public:
     std::string toFEN();
     bool needsPromotion();
     void promotePawn(char piece);
+    char getBoard(int row, int col);
+    std::vector<std::pair<int,int>> getLegalMovesFor(int row, int col);
+    std::vector<std::string> getMoveHistory();
 };
