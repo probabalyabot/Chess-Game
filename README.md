@@ -23,12 +23,6 @@ A fully-featured two-player chess game with a native GUI built in C++ and SFML. 
 
 ---
 
-## Screenshots
-
-> _Add screenshots here once you have them — `assets/screenshots/` is a good place to keep them._
-
----
-
 ## Getting Started
 
 ### 1. Clone the Repository
