@@ -56,7 +56,7 @@ SFML is the graphics/window/audio library this project uses for rendering. You n
    - `lib/` — `.a` static libraries used at compile time
    - `bin/` — `.dll` files needed at runtime
 4. Copy the `.dll` files from `bin/` into the same folder as your `main.exe` (or add `C:\SFML\bin` to your system PATH).
--------------------------------------------------------------------------------------------------------------------------------
+
 Else Install SMFL though MYSYS2 terminal + pacman for easier and more direct installation
 
 Your compile command then needs to point at the SFML headers and libs:
@@ -102,23 +102,7 @@ g++ -std=c++20 chessboard.cpp main.cpp -o chess \
     -lsfml-graphics -lsfml-window -lsfml-system
 ```
 
----
-
-### 3. Add Assets
-
-The game expects an `assets/` folder in the same directory as the executable containing piece sprites and a font:
-
-| File | Description |
-|------|-------------|
-| `wP.png` `wN.png` `wB.png` `wR.png` `wQ.png` `wK.png` | White piece sprites |
-| `bP.png` `bN.png` `bB.png` `bR.png` `bQ.png` `bK.png` | Black piece sprites |
-| `font.ttf` | UI font |
-
-Piece images should be square PNGs at any resolution — they are scaled to fit the tile size at runtime. Free piece sets are available at [lichess/lila](https://github.com/lichess-org/lila/tree/master/public/piece) (open source, multiple styles).
-
----
-
-### 4. Build
+### 3. Build
 
 ```bash
 g++ -std=c++20 chessboard.cpp main.cpp -o main.exe \
@@ -131,7 +115,7 @@ Adjust the `-I` and `-L` paths to wherever you extracted SFML. On Linux/macOS wi
 
 ---
 
-### 5. Run
+### 4. Run
 
 ```bash
 ./main.exe
