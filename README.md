@@ -62,13 +62,13 @@ g++ -std=c++20 chessboard.cpp main.cpp -o main.exe \
     -lsfml-graphics -lsfml-window -lsfml-system
 ```
 
-#### Windows (vcpkg — easiest if you already use it)
+#### Windows ("vcpkg" easiest if you already use it)
 
 ```bash
 vcpkg install sfml
 ```
 
-Then compile normally — vcpkg handles the include/lib paths automatically if integrated with your build system.
+Then compile normally,vcpkg handles the include/lib paths automatically if integrated with your build system.
 
 #### Linux (Debian/Ubuntu)
 
@@ -134,7 +134,7 @@ chess-game/
 The project is split into two clear layers:
 
 **Engine (`chessboard.cpp` / `chessboard.h`)**
-Owns all game state and rules. It is entirely independent of SFML — no rendering code lives here. The engine validates every move, tracks piece positions, handles special moves, and detects game-ending conditions.
+Owns all game state and rules. It is entirely independent of SFML, no rendering code lives here. The engine validates every move, tracks piece positions, handles special moves, and detects game-ending conditions.
 
 **GUI (`main.cpp`)**
 Reads from the engine via its public API and handles all rendering and user input. It translates mouse clicks into board coordinates, constructs algebraic move strings, and delegates everything else to the engine.
@@ -189,7 +189,7 @@ from += (char)('8' - selectedRow);
 
 ---
 
-## How It Works — GUI
+## How It Works
 
 ### Layout
 
