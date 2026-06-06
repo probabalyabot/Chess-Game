@@ -9,3 +9,5 @@ test.exe
 sfml_guide.cpp
 # Python utilities
 *.py
+#avoid re committing readme.md
+*.md

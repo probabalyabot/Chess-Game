@@ -82,4 +82,7 @@ public:
     char getBoard(int row, int col);
     std::vector<std::pair<int,int>> getLegalMovesFor(int row, int col);
     std::vector<std::string> getMoveHistory();
+    bool canCastleKingside(int turn)  { return canCastle(turn, true);  }
+    bool canCastleQueenside(int turn) { return canCastle(turn, false); }
+  
 };
